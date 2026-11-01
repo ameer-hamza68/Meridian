@@ -4,10 +4,10 @@ from agents import build_reader_agent, build_search_agent, writer_chain, critic_
 import os
 
 # ── Transfering values from st.secrets to os.environ ──────────────────────────────────────────────────────────────
-if "GEMINI_API_KEY" in st.secrets:
-     os.environ["GEMINI_API_KEY"] = st.secrets["GEMINI_API_KEY"]
-if "TAVILY_API_KEY" in st.secrets:
-    os.environ["TAVILY_API_KEY"] = st.secrets["TAVILY_API_KEY"]
+# if "GEMINI_API_KEY" in st.secrets:
+#      os.environ["GEMINI_API_KEY"] = st.secrets["GEMINI_API_KEY"]
+# if "TAVILY_API_KEY" in st.secrets:
+#     os.environ["TAVILY_API_KEY"] = st.secrets["TAVILY_API_KEY"]
 
 # ── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(

@@ -1,45 +1,52 @@
+import os
+import streamlit as st
+from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from tools import web_search, scrape_url
-from dotenv import load_dotenv
 
 load_dotenv()
 
-if "GEMINI_API_KEY" in st.secrets:
-     os.environ["GEMINI_API_KEY"] = st.secrets["GEMINI_API_KEY"]
-if "TAVILY_API_KEY" in st.secrets:
-    os.environ["TAVILY_API_KEY"] = st.secrets["TAVILY_API_KEY"]
+
+def _load_secret(name: str):
+    """Streamlit Cloud secrets first, then .env (local)."""
+    try:
+        if name in st.secrets:
+            os.environ[name] = st.secrets[name]
+    except Exception:
+        pass  # local pe secrets.toml nahi hota, .env use hoga
+
+
+_load_secret("GEMINI_API_KEY")
+_load_secret("TAVILY_API_KEY")
 
 llm = ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=0)
 
+
 # 1st agent
 def build_search_agent():
-    return create_agent(
-        model=llm,
-        tools=[web_search]
-    )
+    return create_agent(model=llm, tools=[web_search])
 
-#2nd Agent
+
+# 2nd agent
 def build_reader_agent():
-    return create_agent(
-        model=llm,
-        tools=[scrape_url]
-    )
+    return create_agent(model=llm, tools=[scrape_url])
 
-# Writer Chain
+
+# Writer chain
 writer_prompt = ChatPromptTemplate.from_messages([
-    ("system","You are an expert reaserch writer. Write clear, structured and insightful reports."),
-    ("human","""
+    ("system", "You are an expert research writer. Write clear, structured and insightful reports."),
+    ("human", """
         Write a detailed research report on the topic below:
         Topic: {topic}
-        Reserach Gathered:
+        Research Gathered:
         {research}
 
         Structure the report as:
         - Introduction
-        - Key Findings(minimum 2 well-explained points)
+        - Key Findings (minimum 2 well-explained points)
         - Conclusion
         - Sources (list all URLs found in the research)
 
@@ -49,26 +56,29 @@ writer_prompt = ChatPromptTemplate.from_messages([
 
 writer_chain = writer_prompt | llm | StrOutputParser()
 
-#critic chain
+
+# Critic chain
 critic_prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a shar and constructive research critic. Be honest and specific."),
+    ("system", "You are a sharp and constructive research critic. Be honest and specific."),
     ("human", """
         Review the research report below and evaluate it strictly.
-        Report:{report}
+        Report: {report}
+
         Respond in this exact format:
         Score: X/10
+
         Strengths:
         - ...
         - ...
         - ...
 
-        Areas to Improve
+        Areas to Improve:
         - ...
         - ...
 
         One line verdict:
         ...
-""")
+    """)
 ])
 
 critic_chain = critic_prompt | llm | StrOutputParser()
